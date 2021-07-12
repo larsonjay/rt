@@ -2764,6 +2764,15 @@ Set(%PriorityAsString,
 
 =back
 
+=item C<@HistoryFilterTypes>
+
+Transaction types that ticket history can be filtered by, the default options
+are 'Create', 'Correspond' and 'Comment'.
+
+=cut
+
+Set(@HistoryFilterTypes, qw(Create Correspond Comment));
+
 =head2 Group Summary Configuration
 
 Below are configuration options for the Group Summary page.

@@ -1521,6 +1521,12 @@ our %META;
             }
         },
     },
+    HistoryFilterTypes => {
+        Type            => 'ARRAY',
+        WidgetArguments => {
+            Description => 'Transactions that history can be sorted by' # loc
+        }
+    },
     ServiceBusinessHours => {
         Type => 'HASH',
         PostLoadCheck   => sub {

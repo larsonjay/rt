@@ -52,6 +52,7 @@ $ShowTitle         => 1
 $ShowDisplayModes  => 1
 $ScrollShowHistory => 0
 $SingleTransaction => 0
+$HistoryFilter     => undef
 </%ARGS>
 <%INIT>
 my $record_type = $Object->RecordType;
@@ -66,6 +67,23 @@ else {
     # Default the link to the opposite of the config setting
     # Oldest Txns first is ASC, so reverse it for this option default
     $reverse_txns = RT->Config->Get("OldestTransactionsFirst", $session{'CurrentUser'}) ? 'DESC' : 'ASC';
+}
+
+# Ensure we have an arrayref, even if only one value is submitted
+if ( $HistoryFilter && ref $HistoryFilter ne 'ARRAY' ) {
+    $HistoryFilter = [$HistoryFilter];
+}
+
+# If we do not have a page HistoryFilter arg, check queue config
+if ( !$HistoryFilter || ( ref $HistoryFilter && !scalar @{$HistoryFilter} ) ) {
+    if ( $Object->isa('RT::Ticket') && $Object->QueueObj->FirstAttribute( 'HistoryFilter' ) ) {
+        $HistoryFilter = $Object->QueueObj->FirstAttribute( 'HistoryFilter' )->Content;
+    }
+}
+
+# If we still have no values, then all transaction types should be checked as we are not filtering anything
+if ( ref $HistoryFilter && !scalar @{$HistoryFilter} ) {
+    $HistoryFilter = RT->Config->Get( 'HistoryFilterTypes' ) || [];
 }
 </%INIT>
 <div class="history <% lc $record_type %>" id="<% $histid %>">
@@ -127,6 +145,33 @@ if ( $ShowDisplayModes or $ShowTitle or $ScrollShowHistory ) {
 
         $titleright .= q{</ul></div>};
     }
+
+    my $types = RT->Config->Get( 'HistoryFilterTypes' ) || [];
+    my $history_filter = q{
+        <ul class="dropdown-menu dropdown-menu-right">
+          <li>
+            <form class="m-2" action="}.RT->Config->Get('WebPath').q{">
+              <input type="hidden" name="id" value="}.$Object->Id.q{">
+    };
+
+    # Use counting variable for checkbox ID incase a transaction type has a space
+    my $i = 1;
+    foreach my $type ( @{$types} ) {
+        my $checked = grep {$_ eq $type} @{$HistoryFilter}, ? 'checked="checked"' : '';
+
+        $history_filter .= qq{
+          <div class="custom-control custom-checkbox">
+            <input type="checkbox" id="HistoryFilter-$i" name="HistoryFilter" $checked value="$type" class="custom-control-input">
+            <label class="custom-control-label" for="HistoryFilter-$i">}.loc($type).q{</label>
+          </div>};
+        $i = $i + 1;
+    }
+
+    $history_filter .= q{
+      <input type="submit" class="button btn btn-primary" value="}.loc('Filter').q{">
+      </li></form></ul>};
+
+    $titleright .= qq{<div class="btn-group dropdown"><a href="#" id="history-filter" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><span class="fas fa-filter icon-bordered fa-2x" alt="Filter History" data-toggle="tooltip" data-placement="top" data-original-title="Filter History"></span></a>$history_filter</div>};
 
 </%perl>
 % $m->callback( CallbackName => 'BeforeTitle', %ARGS, title => \$title, titleright => \$titleright, ARGSRef => \%ARGS );

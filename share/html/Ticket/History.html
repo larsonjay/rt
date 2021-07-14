@@ -55,7 +55,8 @@
     ShowHeaders => $ARGS{'ShowHeaders'}, 
     Attachments => $attachments,
     AttachmentContent => $attachment_content,
-    &> 
+    HistoryFilter => $ARGS{'HistoryFilter'}
+    &>
 
 % $m->callback( %ARGS, CallbackName => 'AfterShowHistory', Ticket => $Ticket );
 

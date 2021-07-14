@@ -54,6 +54,8 @@ $AttachmentContent => $Object->TextAttachments
 $ShowHeaders       => 0
 
 $PathPrefix        => ''
+
+$HistoryFilter     => undef
 </%ARGS>
 <%INIT>
 my $trans_content = {};
@@ -128,10 +130,20 @@ while ( my $Transaction = $Transactions->Next ) {
         and RT::Config->Get('SelfServiceCorrespondenceOnly')
         and ($Transaction->Type ne "Correspond" && $Transaction->Type ne "Create");
 
-    if ( $Object->isa('RT::Ticket') && $Object->QueueObj->FirstAttribute( 'HistoryFilter' ) ) {
-        my $filter_types = $Object->QueueObj->FirstAttribute( 'HistoryFilter' )->Content;
+    if ( $HistoryFilter ) {
+        if ( ref $HistoryFilter ne 'ARRAY' ) {
+            $HistoryFilter = [$HistoryFilter];
+        }
 
-        $skip = 1 if not grep {$_ eq $Transaction->Type} @{$filter_types};
+        if ( scalar @{$HistoryFilter} ) {
+            $skip = 1 if not grep {$_ eq $Transaction->Type} @{$HistoryFilter};
+        }
+    }
+    elsif ( $Object->isa('RT::Ticket') && $Object->QueueObj->FirstAttribute( 'HistoryFilter' ) ) {
+        my $filter_types = $Object->QueueObj->FirstAttribute( 'HistoryFilter' )->Content;
+        if ( scalar @{$filter_types} ) {
+            $skip = 1 if not grep {$_ eq $Transaction->Type} @{$filter_types};
+        }
     }
 
     $m->callback(

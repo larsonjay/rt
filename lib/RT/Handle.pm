@@ -2708,7 +2708,7 @@ sub _LoadObject {
                 $principal_type = 'Group';
             }
             else {
-                RT->Logger->error( "Couldn't load group $values->{_Original}{UserId}" );
+                RT->Logger->error( "Couldn't load group $values->{_Original}{GroupId}" );
                 return;
             }
         }
